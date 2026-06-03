@@ -1,0 +1,9 @@
+numpy
+openai
+pandas
+python-dotenv
+reportlab
+Pillow
+PyYAML
+matplotlib
+requests

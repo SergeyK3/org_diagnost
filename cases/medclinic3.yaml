@@ -1,0 +1,8 @@
+id: medclinic3
+image: images/medclinic3.png
+org_type: медицинская клиника
+org_name: medclinic3
+pain: "Перегруз администраторов, очереди, жалобы на сервис"
+format: html
+vision_model: gpt-4o-mini
+simplify_model: gpt-4o

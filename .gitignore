@@ -1,0 +1,28 @@
+# Packaging
+orgdiag.egg-info/
+*.egg-info/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Секреты
+.env
+.env.*
+!.env.example
+
+# Сгенерированные отчёты
+html_out/*.html
+reports/*.pdf
+
+# Кэш прогонов (кроме sample org_json)
+cache/**/*
+!cache/medclinic3_org.json
+
+# Office lock / тяжёлые вложения в images (схемы PNG — в git)
+~$*
+images/*.docx
+images/*.vsd
+images/*.xlsx

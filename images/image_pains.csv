@@ -1,0 +1,19 @@
+﻿имя_файла,боль
+bd12 transport new.png,
+bd12.png,
+bd12new.png,
+bd13 autoservice result.png,(итоговая диаграмма; боль — как у исходной схемы того же bd)
+bd13 autoservice.png,"Ручное управление, есть хаос в управлении. Собственник устал. Жалобы на качество. Кассовые разрывы. (как autoservice2)"
+bd13 autoservice2.png,"Ручное управление, есть хаос в управлении. Собственник устал. Жалобы на качество. Кассовые разрывы."
+bd14 internetshop new.png,
+bd14 internetshop result.png,(итоговая диаграмма; боль — как у исходной схемы того же bd)
+bd14 internetshop.png,
+bd15 zakupki result.png,(итоговая диаграмма; боль — как у исходной схемы того же bd)
+bd15 zakupki.png,
+medclinic.png,"незагружен медицинский персонал, ручное управление (черновик ноутбука; уточнить)"
+medclinic2.png,"незагружен медицинский персонал, ручное управление (черновик ноутбука; уточнить)"
+medclinic3.png,"Перегруз администраторов, очереди, жалобы на сервис (cases/medclinic3.yaml). Альт.: Нет загрузки клиники (ноутбук tree)"
+medclinic3_contours.png,(служебный кадр; боль — как у medclinic3.png)
+medclinic3_morph.png,(служебный кадр; боль — как у medclinic3.png)
+medclinic3_thresh.png,(служебный кадр; боль — как у medclinic3.png)
+мебельная.png,

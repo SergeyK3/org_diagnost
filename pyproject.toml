@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "orgdiag"
+version = "0.1.0"
+description = "Org structure diagnostics from images (org_diagnost)"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "openai",
+    "pandas",
+    "python-dotenv",
+    "reportlab",
+    "Pillow",
+    "PyYAML",
+    "matplotlib",
+    "requests",
+]
+
+[project.scripts]
+orgdiag = "orgdiag.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["orgdiag*"]
