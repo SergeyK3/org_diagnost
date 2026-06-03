@@ -12,11 +12,12 @@ from matplotlib import font_manager
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 from PIL import Image
 
-from orgdiag.paths import FONT_FILE
+from orgdiag.paths import FONT_FILE, REFERENCE_ORG_SCHEME_IMAGE
 from orgdiag.structure import (
     REFERENCE_BLOCK_FLOW,
     REFERENCE_SIDE_BLOCKS,
     RIGHT_SIMPLE_STRUCTURE,
+    normalize_role_for_display,
 )
 
 _font_registered = False
@@ -88,7 +89,7 @@ def _draw_flow_on_ax(ax, blocks: list[str], title: str, color: str) -> None:
 
 def _draw_reference_with_side_blocks(ax, main_flow: str, side_blocks: tuple[str, ...]) -> None:
     """Эталон: основной поток слева, боковые блоки справа (только названия блоков)."""
-    ax.set_title("Эталонная упрощённая структура", fontsize=11, pad=8)
+    ax.set_title("Эталонная упрощённая оргсхема", fontsize=11, pad=8)
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.axis("off")
@@ -190,7 +191,11 @@ def _draw_admin_blocks_on_ax(
             lines.append("(руководитель не указан)")
         else:
             for e in entries[:4]:
-                role = (e.get("role_label") or "—").strip()
+                role = normalize_role_for_display(
+                    e.get("role_label") or "",
+                    e.get("dept_label") or "",
+                    block,
+                )
                 person = (e.get("person_name") or "").strip()
                 if person:
                     lines.append(f"{role}\n{person}")
@@ -259,10 +264,15 @@ def render_block_reference(
     main_flow: str = REFERENCE_BLOCK_FLOW,
     side_blocks: tuple[str, ...] = REFERENCE_SIDE_BLOCKS,
 ) -> Path:
-    _ensure_cyrillic_font()
+    """Эталон — рисунок из docs/Упрощ оргсхема.pdf (reference_org_scheme.png)."""
     dest.parent.mkdir(parents=True, exist_ok=True)
-    fig, ax = plt.subplots(figsize=(11, 4), facecolor="white")
-    _draw_reference_with_side_blocks(ax, main_flow, side_blocks)
+    if REFERENCE_ORG_SCHEME_IMAGE.exists():
+        shutil.copy2(REFERENCE_ORG_SCHEME_IMAGE, dest)
+        return dest.resolve()
+    _ensure_cyrillic_font()
+    fig, ax = plt.subplots(figsize=(12, 2.5), facecolor="white")
+    blocks = _parse_flow(main_flow)
+    _draw_flow_on_ax(ax, blocks, "Эталонная упрощённая оргсхема", "#2e7d32")
     fig.savefig(dest, dpi=150, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     return dest.resolve()

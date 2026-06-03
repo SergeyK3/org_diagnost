@@ -2,6 +2,8 @@
 
 Диагностика оргструктур по изображению: Vision → упрощение → матрица боли → HTML/PDF-отчёт.
 
+**Методология:** [`docs/reference_org_scheme.md`](docs/reference_org_scheme.md) (исходник — [`docs/Упрощ оргсхема.pdf`](docs/Упрощ%20оргсхема.pdf)). Отчёты для разбора — в `html_out/`.
+
 Репозиторий: [github.com/SergeyK3/org_diagnost](https://github.com/SergeyK3/org_diagnost)
 
 ## Миграция с sergey_kim / Colab
@@ -32,6 +34,14 @@ pip install -e .
 pip install streamlit   # опционально, для UI
 ```
 
+### Веб-интерфейс (прототип)
+
+```powershell
+streamlit run app/streamlit_app.py
+```
+
+Шаги: загрузка оргсхемы и боли → заключение (HTML/PDF) → до **3** уточняющих вопросов только по этой диагностике. Посторонние запросы отсекаются правилами и короткой проверкой модели (`gpt-4o-mini`), чтобы не расходовать платный доступ. Лимит настраивается в `.env`: `ORGDIAG_FOLLOWUP_MAX`.
+
 Скопируйте `.env.example` → `.env` и укажите `OPENAI_API_KEY`.
 
 Для PDF с кириллицей положите `data/DejaVuSans.ttf` (шрифт DejaVu Sans).
@@ -49,6 +59,8 @@ pip install streamlit   # опционально, для UI
 
 Пакетный прогон: `python -m orgdiag batch cases/medclinic3.yaml`
 
+Выводы pass1/pass2 всегда формируются LLM; в `cache/<stem>/` сохраняется копия для отладки (не подставляется вместо нового анализа).
+
 ## Структура
 
 ```
@@ -60,5 +72,6 @@ images/        # входные оргсхемы
 cases/         # YAML-кейсы
 cache/         # org_json и PNG артефакты
 html_out/      # HTML-отчёты
+docs/          # reference_org_scheme.md, Упрощ оргсхема.pdf
 reports/       # PDF (legacy)
 ```

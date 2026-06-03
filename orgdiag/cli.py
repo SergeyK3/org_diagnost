@@ -47,11 +47,6 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Step1 по матрице боли",
     )
-    run_p.add_argument(
-        "--no-llm",
-        action="store_true",
-        help="Без LLM-выводов pass1/pass2 (только диаграммы)",
-    )
     run_p.add_argument("--dry-run", action="store_true")
     run_p.add_argument("--no-visuals", action="store_true")
 
@@ -61,7 +56,6 @@ def _build_parser() -> argparse.ArgumentParser:
     batch_p.add_argument("--with-llm-diagnosis", action="store_true")
     batch_p.add_argument("--with-pain-matrix", action="store_true")
     batch_p.add_argument("--refresh-vision", action="store_true")
-    batch_p.add_argument("--no-llm", action="store_true")
 
     return p
 
@@ -82,7 +76,6 @@ def _cfg_from_args(args: argparse.Namespace) -> RunConfig:
     )
     cache_dir = resolve_path(args.cache_dir) if getattr(args, "cache_dir", None) else None
 
-    no_llm = getattr(args, "no_llm", False)
     return RunConfig(
         image=image_path,
         org_type=args.org_type,
@@ -99,8 +92,6 @@ def _cfg_from_args(args: argparse.Namespace) -> RunConfig:
         with_llm_diagnosis=getattr(args, "with_llm_diagnosis", False),
         with_pain_matrix=getattr(args, "with_pain_matrix", False)
         or getattr(args, "with_llm_diagnosis", False),
-        with_block_analysis=not no_llm,
-        with_admin_analysis=not no_llm,
         output_format=getattr(args, "format", "html"),
         image_url=getattr(args, "image_url", None),
         dry_run=getattr(args, "dry_run", False),
@@ -203,9 +194,6 @@ def cmd_batch(args: argparse.Namespace) -> int:
                 cfg.with_llm_diagnosis = True
             if args.with_pain_matrix:
                 cfg.with_pain_matrix = True
-            if args.no_llm:
-                cfg.with_block_analysis = False
-                cfg.with_admin_analysis = False
             cfg.output_format = args.format
             result = run_diagnosis(cfg)
             out = result.html_path or result.pdf_path

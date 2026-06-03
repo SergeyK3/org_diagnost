@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import json
-import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from openai import OpenAI
 
+from orgdiag.analysis_cache import (
+    analysis_input_fingerprint,
+    save_analysis_meta,
+    save_cached_pass1,
+    save_cached_pass2,
+)
 from orgdiag.config import RunConfig, default_contact, require_api_key
 from orgdiag.image_input import resolve_image_input
 from orgdiag.llm_diagnosis import (
@@ -15,13 +20,20 @@ from orgdiag.llm_diagnosis import (
     run_step1_diagnosis,
 )
 from orgdiag.matrix import analyze_pain
-from orgdiag.paths import CACHE_DIR, HTML_OUT_DIR, REPORTS_DIR, resolve_path
+from orgdiag.paths import CACHE_DIR, HTML_OUT_DIR, REPORTS_DIR
 from orgdiag.prompts import load_all_prompts
-from orgdiag.report_html import default_html_path, generate_html_report
+from orgdiag.report_html import (
+    default_html_path,
+    generate_html_report,
+    has_analysis_text,
+)
 from orgdiag.report_pdf import generate_pdf_report
 from orgdiag.structure import (
+    build_admin_context_notes,
     compare_simple_structures,
+    enrich_block_roles,
     map_departments_to_blocks,
+    rebalance_block_roles,
     render_sideways_tree,
     simplify_structure_llm,
 )
@@ -140,13 +152,16 @@ def run_diagnosis(cfg: RunConfig) -> DiagnosisResult:
         model=cfg.simplify_model,
         client=client,
     )
+    block_roles = enrich_block_roles(org_json, block_roles)
+    block_roles = rebalance_block_roles(org_json, block_roles)
+    admin_context_notes = build_admin_context_notes(org_json)
 
     contact = cfg.contact or default_contact()
+    step1_text = None
     pass1_text = ""
     pass2_text = ""
-    step1_text = None
 
-    if cfg.with_block_analysis and prompts.get("pass1"):
+    if prompts.get("pass1"):
         pass1_text = run_pass1_block_analysis(
             system_prompt=prompts["system"],
             pass1_prompt=prompts["pass1"],
@@ -159,10 +174,9 @@ def run_diagnosis(cfg: RunConfig) -> DiagnosisResult:
             model=cfg.simplify_model,
             client=client,
         )
-        (cache_root / cfg.image_stem / "pass1.txt").parent.mkdir(parents=True, exist_ok=True)
-        (cache_root / cfg.image_stem / "pass1.txt").write_text(pass1_text, encoding="utf-8")
+        save_cached_pass1(cache_root, cfg.image_stem, pass1_text)
 
-    if cfg.with_admin_analysis and prompts.get("pass2"):
+    if prompts.get("pass2"):
         pass2_text = run_pass2_admin_analysis(
             system_prompt=prompts["system"],
             pass2_prompt=prompts["pass2"],
@@ -172,10 +186,24 @@ def run_diagnosis(cfg: RunConfig) -> DiagnosisResult:
             simple_structure=simple_structure,
             block_roles=block_roles,
             org_json=org_json,
+            admin_context_notes=admin_context_notes,
             model=cfg.simplify_model,
             client=client,
         )
-        (cache_root / cfg.image_stem / "pass2.txt").write_text(pass2_text, encoding="utf-8")
+        save_cached_pass2(cache_root, cfg.image_stem, pass2_text)
+
+    if not has_analysis_text(pass1_text, pass2_text):
+        raise RuntimeError(
+            "LLM не вернул тексты выводов (pass1/pass2). Проверьте OPENAI_API_KEY и промпты."
+        )
+
+    fingerprint = analysis_input_fingerprint(
+        org_type=cfg.org_type,
+        pain=cfg.pain,
+        hierarchy_text=hierarchy_text,
+        simple_structure=simple_structure,
+    )
+    save_analysis_meta(cache_root, cfg.image_stem, fingerprint=fingerprint)
 
     if cfg.with_llm_diagnosis or cfg.with_pain_matrix:
         step1_text = run_step1_diagnosis(

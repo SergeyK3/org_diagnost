@@ -11,7 +11,7 @@ from orgdiag.paths import ENV_FILE
 
 OutputFormat = Literal["html", "pdf", "both"]
 
-DEFAULT_ORGDIAG_CONTACT = "Ким Сергей Васильевич, +7 701 527 0015"
+DEFAULT_ORGDIAG_CONTACT = "@kimsergeiv"
 
 
 @dataclass
@@ -31,8 +31,6 @@ class RunConfig:
     skip_vision: bool = False
     with_llm_diagnosis: bool = False
     with_pain_matrix: bool = False
-    with_block_analysis: bool = True
-    with_admin_analysis: bool = True
     output_format: OutputFormat = "html"
     image_url: str | None = None
     dry_run: bool = False

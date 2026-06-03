@@ -8,22 +8,24 @@ from openai import OpenAI
 
 from orgdiag.config import require_api_key
 
-# Основной поток (только названия блоков, без должностей/ФИО)
+# Полный эталон из docs/Упрощ оргсхема.pdf (рисунок → reference_org_scheme.png)
 REFERENCE_BLOCK_FLOW = (
-    "Управление → Маркетинг → Учёт / Финансы → Производство"
+    "Управление → Кадры → Маркетинг → Бухгалтерия → "
+    "Производство (оказание услуг) → Контроль качества → "
+    "Связь с обществом (СМИ и филиалы)"
 )
 
-REFERENCE_SIDE_BLOCKS = (
-    "Контроль качества",
-    "Связь с обществом (СМИ и филиалы)",
-)
+# Устаревшая модель «боковых» блоков; эталон — одна линия из PDF
+REFERENCE_SIDE_BLOCKS: tuple[str, ...] = ()
 
 # Обратная совместимость
 RIGHT_SIMPLE_STRUCTURE = REFERENCE_BLOCK_FLOW
 
 BLOCK_CATEGORIES = (
     "Управление",
+    "Кадры",
     "Маркетинг",
+    "Бухгалтерия",
     "Учёт / Финансы",
     "Производство",
     "Контроль качества",
@@ -36,8 +38,7 @@ def reference_flow_text() -> str:
 
 
 def reference_full_text() -> str:
-    side = " | ".join(REFERENCE_SIDE_BLOCKS)
-    return f"{REFERENCE_BLOCK_FLOW}  (+ справа: {side})"
+    return REFERENCE_BLOCK_FLOW
 
 
 def fmt_role(role_label: str, count: int, person_name: str | None = None) -> str:
@@ -111,9 +112,10 @@ def simplify_structure_llm(
     require_api_key()
     client = client or OpenAI()
     categories = (
-        "'Управление', 'Маркетинг', 'Учёт / Финансы', 'Производство'. "
-        "Отдел продаж и лидогенерация относятся к 'Маркетинг', если на схеме не выделены отдельно. "
-        "Контроль качества и связь с обществом (СМИ, филиалы, PR) — только если явно есть на схеме."
+        "'Управление', 'Маркетинг', 'Бухгалтерия' (или 'Учёт / Финансы'), 'Производство'. "
+        "'Кадры' — только если на схеме явно выделен HR/подбор. "
+        "Отдел продаж и лидогенерация относятся к 'Маркетинг'. "
+        "Контроль качества и связь с обществом — только если явно есть на схеме."
     )
     prompt = (
         "Ты — эксперт по организационным структурам любых предприятий. "
@@ -153,10 +155,8 @@ def compare_simple_structures(
     lines = [
         "Реальная структура (упрощённый поток):",
         str(real),
-        "\nЭталонная структура (основной поток блоков):",
+        "\nЭталонная упрощённая оргсхема (полный поток из PDF):",
         str(ideal),
-        "\nБоковые блоки эталона (должны присутствовать на полной схеме):",
-        ", ".join(REFERENCE_SIDE_BLOCKS),
         "\nРезультат сравнения:",
     ]
     if _normalize_flow(real) == _normalize_flow(ideal):
@@ -207,7 +207,7 @@ def map_departments_to_blocks(
                     "person_name": None,
                 }
             )
-        return empty
+        return enrich_block_roles(org_json, empty)
 
     require_api_key()
     client = client or OpenAI()
@@ -256,7 +256,7 @@ def map_departments_to_blocks(
                         "person_name": item.get("person_name"),
                     }
                 )
-            return empty
+            return enrich_block_roles(org_json, empty)
     except (json.JSONDecodeError, KeyError, IndexError):
         pass
 
@@ -286,4 +286,111 @@ def map_departments_to_blocks(
                 "person_name": person,
             }
         )
-    return empty
+    return enrich_block_roles(org_json, empty)
+
+
+def normalize_role_for_display(
+    role_label: str,
+    dept_label: str,
+    block_name: str,
+) -> str:
+    rl = (role_label or "").strip()
+    dl = (dept_label or "").strip()
+    block = (block_name or "").lower()
+    ctx = f"{rl} {dl}".lower()
+    if re.search(r"фин", rl, re.I) and re.search(r"директор", rl, re.I):
+        if "маркет" in block or any(
+            x in ctx for x in ("продаж", "реклам", "маркет", "колл")
+        ):
+            return f"Коммерческий директор (на схеме: {rl})"
+    return rl or dl or "—"
+
+
+def rebalance_block_roles(
+    org_json: dict,
+    block_roles: dict[str, list[dict[str, Any]]],
+) -> dict[str, list[dict[str, Any]]]:
+    """Финдиректор с подчинёнными из маркетинга/рекламы → блок Маркетинг."""
+    blocks = list(block_roles.keys())
+    marketing_key = next((b for b in blocks if "маркет" in b.lower()), None)
+    if not marketing_key:
+        return block_roles
+
+    depts_by_label = {
+        (d.get("dept_label") or ""): d for d in org_json.get("departments") or []
+    }
+
+    for block in blocks:
+        kept: list[dict[str, Any]] = []
+        for entry in block_roles.get(block) or []:
+            dl = (entry.get("dept_label") or "").lower()
+            dept = depts_by_label.get(entry.get("dept_label") or "")
+            if dept and "фин" in dl and "директор" in dl:
+                sub_roles = [
+                    (r.get("role_label") or "").lower() for r in dept.get("roles") or []
+                ]
+                if any(
+                    x in s for s in sub_roles for x in ("реклам", "продаж", "маркет", "колл")
+                ):
+                    block_roles.setdefault(marketing_key, []).append(entry)
+                    continue
+            kept.append(entry)
+        block_roles[block] = kept
+    return block_roles
+
+
+def enrich_block_roles(
+    org_json: dict,
+    block_roles: dict[str, list[dict[str, Any]]],
+) -> dict[str, list[dict[str, Any]]]:
+    """Добавляет owner/director_label, если их нет среди отделов (напр. Генеральный директор)."""
+    blocks_order = list(block_roles.keys())
+    if not blocks_order:
+        return block_roles
+    mgmt_key = next(
+        (b for b in blocks_order if "управ" in b.lower()),
+        blocks_order[0],
+    )
+
+    def _already_present(label: str) -> bool:
+        low = label.lower()
+        for entries in block_roles.values():
+            for e in entries:
+                if low in (e.get("role_label") or "").lower():
+                    return True
+                if low in (e.get("dept_label") or "").lower():
+                    return True
+        return False
+
+    for leader in (org_json.get("owner_label"), org_json.get("director_label")):
+        text = (leader or "").strip() if leader else ""
+        if text and not _already_present(text):
+            block_roles.setdefault(mgmt_key, []).insert(
+                0,
+                {
+                    "dept_label": "Верхний уровень",
+                    "role_label": text,
+                    "person_name": None,
+                },
+            )
+    return block_roles
+
+
+def build_admin_context_notes(org_json: dict) -> str:
+    labels = [(d.get("dept_label") or "") for d in org_json.get("departments") or []]
+    low = [l.lower() for l in labels]
+    notes: list[str] = []
+    if any("бухгал" in l for l in low) and any("фин" in l for l in low):
+        notes.append(
+            "На схеме есть главный бухгалтер и финансовый директор: "
+            "если главбух подчинён финдиректору — по смыслу одна функция учёта "
+            "(финдиректор и главбух часто синонимы)."
+        )
+    if any("фин" in l for l in low) and any(
+        x in l for l in low for x in ("продаж", "маркет", "реклам")
+    ):
+        notes.append(
+            "Если финансовый директор возглавляет продажи/маркетинг — "
+            "корректное название: коммерческий директор."
+        )
+    return "\n".join(notes)

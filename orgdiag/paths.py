@@ -35,6 +35,8 @@ REPORTS_DIR = PROJECT_ROOT / "reports"
 HTML_OUT_DIR = PROJECT_ROOT / "html_out"
 CACHE_DIR = PROJECT_ROOT / "cache"
 CASES_DIR = PROJECT_ROOT / "cases"
+DOCS_DIR = PROJECT_ROOT / "docs"
+REFERENCE_ORG_SCHEME_IMAGE = DOCS_DIR / "reference_org_scheme.png"
 
 
 def resolve_path(path: str | Path, base: Path | None = None) -> Path:

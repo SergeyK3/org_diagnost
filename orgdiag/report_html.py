@@ -6,6 +6,35 @@ import re
 from datetime import date
 from pathlib import Path
 
+# Перед эталонным рисунком (PDF, стр. 3)
+ORG_SCHEME_INTRO = (
+    "Организующая схема (оргсхема) отличается от оргструктуры: в ней видно "
+    "направление создания продукта или услуги, а не только «кто кому подчиняется». "
+    "Ниже — правильная упрощённая оргсхема (эталон для сравнения)."
+)
+
+# После эталонного рисунка (reference_org_scheme.md, 5 пунктов)
+REFERENCE_NARRATIVE_ITEMS: tuple[str, ...] = (
+    "Управление — возникает идея производства или услуги; руководитель задаёт направление. "
+    "Найм на старте часто встроен в самого руководителя; отдельный блок «Кадры» появляется при росте.",
+    "Маркетинг — нужно продать идею ценности продукта или услуги. "
+    "Без продаж до производства запускать производство бессмысленно; здесь частые провалы у МСП.",
+    "Бухгалтерия (учёт / финансы) — когда услуга «продаётся», нужен учёт денег "
+    "(один человек, аутсорс или сам руководитель).",
+    "Производство (оказание услуг) — руководителю часто близко; на схемах обычно проработано; "
+    "на ранних этапах качество часто держит сам производственник.",
+    "Контроль качества и связь с обществом (СМИ, филиалы) — зрелые функции; "
+    "на упрощённых «иерархических» схемах часто отсутствуют.",
+)
+
+RECOMMENDATION_HTML = (
+    'для уточнения диагностики и прояснения возникших вопросов рекомендуем '
+    'обратиться к автору проекта (Ким Сергей Васильевич, Tg: '
+    '<a href="https://t.me/kimsergeiv">@kimsergeiv</a>)'
+)
+
+PLACEHOLDER_NOT_DONE = "Анализ не выполнен."
+
 
 def slugify_org_name(name: str) -> str:
     """Краткое имя файла: латиница, цифры, подчёркивание."""
@@ -48,6 +77,39 @@ def _section_img(title: str, path: Path | None) -> str:
     )
 
 
+def _recommendation_html(contact: str) -> str:
+    """Текст рекомендации в конце отчёта; по умолчанию — автор проекта."""
+    c = contact.strip()
+    if not c or c.startswith("@") or "kimsergeiv" in c.lower():
+        return RECOMMENDATION_HTML
+    if c.startswith("<"):
+        return (
+            "для уточнения диагностики и прояснения возникших вопросов рекомендуем "
+            f"{c}"
+        )
+    return (
+        "для уточнения диагностики и прояснения возникших вопросов рекомендуем "
+        f"{html.escape(c)}"
+    )
+
+
+def _reference_org_scheme_block(visual_paths: dict[str, Path]) -> str:
+    intro = f"<p class='intro'>{html.escape(ORG_SCHEME_INTRO)}</p>"
+    img = _section_img("Эталонная упрощённая оргсхема", visual_paths.get("block_reference"))
+    items = "".join(
+        f"<li>{html.escape(item)}</li>" for item in REFERENCE_NARRATIVE_ITEMS
+    )
+    narrative = (
+        "<p class='narrative-title'><strong>Зачем такой порядок блоков:</strong></p>"
+        f"<ol class='narrative'>{items}</ol>"
+    )
+    return intro + img + narrative
+
+
+def has_analysis_text(pass1_text: str, pass2_text: str) -> bool:
+    return bool(pass1_text.strip() or pass2_text.strip())
+
+
 def generate_html_report(
     dest: Path,
     *,
@@ -59,17 +121,23 @@ def generate_html_report(
     pass2_text: str,
     contact: str = "",
 ) -> Path:
-    analysis_date = analysis_date or date.today()
-    contact = contact.strip() or "свяжитесь с разработчиком системы оргдиагностики"
+    if not has_analysis_text(pass1_text, pass2_text):
+        raise ValueError(
+            "Нет текстов выводов pass1/pass2 для HTML — "
+            "анализ LLM не выполнен или вернул пустой ответ."
+        )
 
-    summary = (
-        f"<h2>Общий итог</h2>"
-        f"<h3>Выводы по блочной структуре</h3>"
+    analysis_date = analysis_date or date.today()
+    recommendation = _recommendation_html(contact)
+    reference_block = _reference_org_scheme_block(visual_paths)
+
+    pass1_section = (
+        f"<h3>Выводы (блочная структура)</h3>"
         f"<div class='conclusion'>{_text_to_html(pass1_text)}</div>"
-        f"<h3>Выводы по административным должностям</h3>"
-        f"<div class='conclusion'>{_text_to_html(pass2_text)}</div>"
-        f"<p><strong>Рекомендация:</strong> для уточнения диагностики и разработки плана изменений "
-        f"рекомендуем {html.escape(contact)}.</p>"
+    )
+
+    footer = (
+        f"<p class='recommendation'><strong>Рекомендация:</strong> {recommendation}.</p>"
     )
 
     body = f"""<!DOCTYPE html>
@@ -84,6 +152,9 @@ def generate_html_report(
     h3 {{ margin-top: 1.25rem; font-size: 1.1rem; }}
     .meta {{ color: #555; }}
     .conclusion {{ white-space: pre-wrap; line-height: 1.5; background: #f5f5f5; padding: 1rem; border-radius: 6px; }}
+    .intro, .narrative-title {{ font-size: 0.95rem; color: #444; line-height: 1.5; }}
+    .narrative {{ font-size: 0.92rem; color: #555; line-height: 1.45; margin: 0.5rem 0 1rem 1.25rem; }}
+    .recommendation {{ margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ddd; }}
   </style>
 </head>
 <body>
@@ -95,16 +166,15 @@ def generate_html_report(
   <h2>Анализ блочной структуры</h2>
   {_section_img("Исходный граф", visual_paths.get("block_source"))}
   {_section_img("Проанализированная упрощённая структура", visual_paths.get("block_analyzed"))}
-  {_section_img("Эталонная упрощённая структура", visual_paths.get("block_reference"))}
-  <h3>Выводы (блочная структура)</h3>
-  <div class="conclusion">{_text_to_html(pass1_text)}</div>
+  {reference_block}
+  {pass1_section}
 
   <h2>Анализ административных должностей (руководители)</h2>
   {_section_img("Структура с должностями и руководителями", visual_paths.get("admin_roles"))}
   <h3>Выводы (руководители)</h3>
   <div class="conclusion">{_text_to_html(pass2_text)}</div>
 
-  {summary}
+  {footer}
 </body>
 </html>
 """
@@ -115,7 +185,7 @@ def generate_html_report(
 
 def _text_to_html(text: str) -> str:
     if not text or not text.strip():
-        return "<em>Анализ не выполнен.</em>"
+        return f"<em>{PLACEHOLDER_NOT_DONE}</em>"
     return html.escape(text.strip()).replace("\n", "<br />\n")
 
 

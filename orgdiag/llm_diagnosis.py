@@ -131,6 +131,7 @@ def run_pass2_admin_analysis(
     simple_structure: str,
     block_roles: dict[str, list[dict[str, Any]]],
     org_json: dict,
+    admin_context_notes: str = "",
     model: str = "gpt-4o",
     client: OpenAI | None = None,
 ) -> str:
@@ -156,6 +157,8 @@ def run_pass2_admin_analysis(
 Фрагмент org_json:
 {json.dumps(org_json, ensure_ascii=False, indent=2)[:6000]}
 """
+    if admin_context_notes.strip():
+        user_content += f"\nСлужебные пометки по должностям:\n{admin_context_notes}\n"
     return _chat(
         client,
         system_prompt=system_prompt,
