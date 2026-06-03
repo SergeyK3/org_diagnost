@@ -4,6 +4,24 @@
 
 Репозиторий: [github.com/SergeyK3/org_diagnost](https://github.com/SergeyK3/org_diagnost)
 
+## Миграция с sergey_kim / Colab
+
+Проект вынесен из `AiUnivercity/Stage2HR/kim_sergey/sergey_kim` в автономный Python-репозиторий. Colab и ноутбуки **не** входят в этот репозиторий.
+
+| Было (sergey_kim) | Стало (org_diagnost) |
+|-------------------|----------------------|
+| `colabs/prompts/` | `prompts/` |
+| `colabs/matrix_defects.txt` | `data/matrix_defects.txt` |
+| `colabs/DejaVuSans.ttf` | `data/DejaVuSans.ttf` |
+| `colabs/.env` | `.env` в корне проекта |
+| `colabs/reports/` | `reports/` |
+| `colabs/venv/` | `.venv` в корне (`python -m venv .venv`) |
+| `run_orgdiag.ps1` → venv в colabs | `run_orgdiag.ps1` → `.venv` |
+
+После клона: скопируйте ключ из старого `colabs/.env` в новый `.env` (файл в git не коммитится). Путь к схемам по умолчанию — `images/` в корне; при необходимости задайте `ORGDIAG_IMAGES_DIR` в `.env`.
+
+Кэш Vision (`cache/*_org.json`) и кейсы (`cases/*.yaml`) совместимы — можно копировать из старого `sergey_kim/cache` и `sergey_kim/cases`.
+
 ## Установка
 
 ```powershell
