@@ -1,0 +1,71 @@
+{
+  "run": {
+    "version": "v1",
+    "seeds": "D:/MyActivity/MyInfoBusiness/MyPythonApps/14 OrgDiagnost/url_collect/seed_urls.txt",
+    "count_seeds": 10,
+    "count_errors": 10,
+    "at": "2026-06-04T18:50:22.616297+00:00"
+  },
+  "errors": [
+    {
+      "seed_url": "https://www.nlmk.com/ru/about/management/",
+      "stage": "http",
+      "message": "HTTP 404",
+      "detail": "404 Client Error: Not Found for url: https://www.nlmk.com/ru/about/management/"
+    },
+    {
+      "seed_url": "https://www.sberbank.ru/ru/about/today/org",
+      "stage": "no_candidates",
+      "message": "Не найдено подходящих изображений",
+      "detail": ""
+    },
+    {
+      "seed_url": "https://www.tinkoff.ru/about/",
+      "stage": "image_too_small",
+      "message": "642 байт < 15000",
+      "detail": "https://cdn.tbank.ru/static/pfa-multimedia/images/33447f85-5b92-42f9-8d88-509bd152b47c.svg"
+    },
+    {
+      "seed_url": "https://www.vtb.ru/o-banke/rukovodstvo/",
+      "stage": "http",
+      "message": "HTTP 404",
+      "detail": "404 Client Error: Not Found for url: https://www.vtb.ru/o-banke/rukovodstvo/"
+    },
+    {
+      "seed_url": "https://www.magnit.com/ru/about/",
+      "stage": "http",
+      "message": "HTTP 404",
+      "detail": "404 Client Error: Not Found for url: https://www.magnit.com/ru/about/"
+    },
+    {
+      "seed_url": "https://www.x5.ru/ru/Pages/default.aspx",
+      "stage": "http",
+      "message": "HTTP 404",
+      "detail": "404 Client Error: Not Found for url: https://www.x5.ru/ru/Pages/default.aspx"
+    },
+    {
+      "seed_url": "https://example.com",
+      "stage": "no_candidates",
+      "message": "Не найдено подходящих изображений",
+      "detail": ""
+    },
+    {
+      "seed_url": "https://httpstat.us/403",
+      "stage": "connection",
+      "message": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+      "detail": ""
+    },
+    {
+      "seed_url": "https://this-domain-does-not-exist-9f3c.org/",
+      "stage": "connection",
+      "message": "HTTPSConnectionPool(host='this-domain-does-not-exist-9f3c.org', port=443): Max retries exceeded with url: / (Caused by NameResolutionError(\"HTTPSConnection(host='this-domain-does-not-exist-9f3c.org', port=443): Failed to resolve 'this-domain-does-not-exist-9f3c.org' ([Errno 11001] getaddrinfo failed)\"))",
+      "detail": ""
+    },
+    {
+      "seed_url": "https://www.consultant.ru/about/",
+      "stage": "image_too_small",
+      "message": "9406 байт < 15000",
+      "detail": "https://static.consultant.ru/images/photos/photo83779.jpg"
+    }
+  ]
+}

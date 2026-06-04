@@ -21,6 +21,10 @@ reports/*.pdf
 cache/**/*
 !cache/medclinic3_org.json
 
+# Временные прогоны сбора образцов
+url_collect/review_batch_*/
+url_collect/images/
+
 # Office lock / тяжёлые вложения в images (схемы PNG — в git)
 ~$*
 images/*.docx

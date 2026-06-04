@@ -1,0 +1,8 @@
+{
+  "schema_version": 2,
+  "description": "Оргструктуры с сайтов: иерархия с первым руководителем и ресурсниками (см. ORG_STRUCTURE_CRITERION.md). Поля org_type и pain — перед batch.",
+  "items": [],
+  "failed_seeds_last_run": [],
+  "updated": "2026-06-04T19:25:18.409131+00:00",
+  "stats_hint": "Для batch: привяжите org_type/pain, затем orgdiag run --image-url <org_chart_url>"
+}

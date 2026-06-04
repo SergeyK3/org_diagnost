@@ -1,0 +1,27 @@
+{
+  "run": {
+    "version": "v2",
+    "criterion": "иерархия: первый руководитель + ресурсники (ORG_STRUCTURE_CRITERION.md)",
+    "improvements": [
+      "только страницы org-structure, не about/team",
+      "штраф photo/logo/banner/multimedia",
+      "проверка файла Pillow: размер и светлый фон схемы",
+      "reject SVG"
+    ],
+    "v1_error_stages_seen": [
+      "connection",
+      "http",
+      "image_too_small",
+      "no_candidates"
+    ],
+    "at": "2026-06-04T19:25:18.410148+00:00"
+  },
+  "errors": [
+    {
+      "seed_url": "https://www.consultant.ru/about/company/structure/ric/",
+      "stage": "no_org_structure",
+      "message": "Не найдено изображений иерархической оргструктуры (руководитель + подчинённые/ресурсники). См. ORG_STRUCTURE_CRITERION.md",
+      "detail": ""
+    }
+  ]
+}

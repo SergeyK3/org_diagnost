@@ -42,6 +42,17 @@ streamlit run app/streamlit_app.py
 
 Шаги: загрузка оргсхемы и боли → заключение (HTML/PDF) → до **3** уточняющих вопросов только по этой диагностике. Посторонние запросы отсекаются правилами и короткой проверкой модели (`gpt-4o-mini`), чтобы не расходовать платный доступ. Лимит настраивается в `.env`: `ORGDIAG_FOLLOWUP_MAX`.
 
+Пересборка HTML из кэша (без повторного LLM): `python scripts/regen_html_from_cache.py --stem medclinic3`
+
+**Временно** — смоделировать вопросы собственника и ответы follow-up (не в UI):
+
+```powershell
+python scripts/simulate_owner_questions.py --stem medclinic3 --examples-only --dry-run
+python scripts/simulate_owner_questions.py --stem medclinic3 --examples-only
+```
+
+Результат: `cache/<stem>/owner_qa_simulation.md`
+
 Скопируйте `.env.example` → `.env` и укажите `OPENAI_API_KEY`.
 
 Для PDF с кириллицей положите `data/DejaVuSans.ttf` (шрифт DejaVu Sans).

@@ -196,7 +196,12 @@ def _render_input_form() -> None:
 
     col1, col2 = st.columns(2)
     with col1:
-        org_name = st.text_input("Краткое название организации", key="org_name")
+        org_name = st.text_input(
+            "Введите условное название организации, чтобы как-то назвать выходной файл",
+            key="org_name",
+            placeholder="например: клиника_1",
+            help="Необязательно. Любое обозначение — только для имени HTML/PDF, в отчёт не обязательно попадёт реальное название.",
+        )
         org_type = st.text_input("Тип предприятия *", "медицинская клиника", key="org_type")
     with col2:
         contact = st.text_input("Контакт в отчёте", default_contact(), key="contact")

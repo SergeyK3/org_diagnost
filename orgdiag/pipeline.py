@@ -256,15 +256,38 @@ def run_diagnosis(cfg: RunConfig) -> DiagnosisResult:
         )
 
     if cfg.output_format in ("html", "both"):
+        from orgdiag.owner_questions import resolve_owner_qa_for_report
+
         out_html = cfg.html_output or default_html_output_path(cfg)
+        owner_qa = resolve_owner_qa_for_report(
+            DiagnosisResult(
+                image=image_for_vision,
+                org_type=cfg.org_type,
+                pain=cfg.pain,
+                org_json=org_json,
+                hierarchy_text=hierarchy_text,
+                simple_structure=simple_structure,
+                compare_text=compare_text,
+                pain_analysis_text=pain.text,
+                pass1_text=pass1_text,
+                pass2_text=pass2_text,
+                block_roles=block_roles,
+            ),
+            cfg.image_stem,
+            cache_root,
+            contact=contact,
+            client=client,
+        )
         html_path = generate_html_report(
             out_html,
             org_name=cfg.display_org_name,
             org_type=cfg.org_type,
+            pain=cfg.pain,
             visual_paths=visual_paths,
             pass1_text=pass1_text,
             pass2_text=pass2_text,
             contact=contact,
+            owner_qa=owner_qa,
         )
 
     (artifacts_dir / "summary.json").write_text(

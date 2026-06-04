@@ -1,0 +1,13 @@
+{
+  "at": "2026-06-04T19:25:18.411162+00:00",
+  "seeds_total": 1,
+  "collection_items": 0,
+  "by_status": {
+    "failed": 1
+  },
+  "error_stages": {
+    "no_org_structure": 1
+  },
+  "errors_total": 1,
+  "urls_with_chart": 0
+}
